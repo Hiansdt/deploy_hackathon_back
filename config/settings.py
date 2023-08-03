@@ -4,11 +4,17 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
+# SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
 
-DEBUG = True
+SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1'] 
+DEBUG = 'RENDER' not in os.environ
+
+ALLOWED_HOSTS = [] 
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,6 +52,7 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -122,7 +129,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+# Essa configuração informa ao Django em qual URL os arquivos estáticos serão servidos ao usuário.
+# Aqui, eles estarão acessíveis em seu-domínio.onrender.com/static/...
+STATIC_URL = '/static/'
+
+# As seguintes configurações só fazem sentido em produção e podem causar problemas em ambientes de desenvolvimento.
+if not DEBUG:
+    # Indica ao Django para copiar os arquivos estáticos para o diretório `staticfiles` 
+    # no diretório da sua aplicação no Render.
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+    # Ativa o backend de armazenamento WhiteNoise, que cuida da compressão dos arquivos estáticos
+    # e cria nomes únicos para cada versão, permitindo que sejam armazenados em cache com segurança para sempre.
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

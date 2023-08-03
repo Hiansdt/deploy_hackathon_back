@@ -18,6 +18,8 @@ dependencies = [
     "django-extensions>=3.2.3",
     "python-magic-bin==0.4.14",
     "mysqlclient>=2.2.0",
+    "whitenoise[brotli]>=6.5.0",
+    "gunicorn>=21.2.0",
 ]
 requires-python = ">=3.11"
 license = {text = "MIT"}
