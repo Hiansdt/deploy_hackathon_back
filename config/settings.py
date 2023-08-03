@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
 
-SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
+SECRET_KEY = os.environ.get('SECRET_KEY', default='django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^')
 
 DEBUG = 'RENDER' not in os.environ
 
