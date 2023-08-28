@@ -18,17 +18,7 @@ class FavoriteViewSet(ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return FavoriteSerializer
         return FavoriteSerializerCreate
-    parser_classes = (MultiPartParser, FormParser)
-    
-    @classmethod
-    @jwt_optional
-    def as_view(cls, actions=None, **kwargs):
-        return super().as_view(actions, **kwargs)
-
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [AllowAny()] 
-        return super().get_permissions()
+    permission_classes = [AllowAny]
 
 @api_view(["GET"])
 @authentication_classes([])

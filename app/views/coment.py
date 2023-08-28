@@ -1,10 +1,13 @@
 from rest_framework.viewsets import ModelViewSet
-from config.decorators import jwt_optional
 from rest_framework.permissions import AllowAny
-from rest_framework.permissions import BasePermission
-from rest_framework.parsers import MultiPartParser, FormParser
 from app.models import Coment
 from app.serializers import ComentSerializer, ComentSerializerCreate
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
+from rest_framework.response import Response
 
 class ComentViewSet(ModelViewSet):
     queryset = Coment.objects.all()
@@ -12,14 +15,15 @@ class ComentViewSet(ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return ComentSerializer
         return ComentSerializerCreate
-    parser_classes = (MultiPartParser, FormParser)
     
-    @classmethod
-    @jwt_optional
-    def as_view(cls, actions=None, **kwargs):
-        return super().as_view(actions, **kwargs)
+    permission_classes = [AllowAny]
 
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [AllowAny()] 
-        return super().get_permissions()
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([])
+def getComentsOfBook(request):
+    id = request.GET.get("id")
+    coments = Coment.objects.filter(livro=id)
+    serializer = ComentSerializer(coments, many=True)
+
+    return Response(serializer.data)

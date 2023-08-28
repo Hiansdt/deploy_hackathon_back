@@ -15,6 +15,10 @@ from django.db.models import Q
 from django.core.mail import send_mail
 import secrets
 from datetime import datetime
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from uploader.models import Image
 
 User = get_user_model()
 
@@ -22,6 +26,7 @@ User = get_user_model()
 class UsuarioViewSet(ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
+
 
 
 @api_view(["POST"])
@@ -47,7 +52,7 @@ def register(request):
         user.save()
 
         response_data = {
-            "message": "Usuário criado com sucesso.",
+            "message": "Usuário criado com sucesso!",
             "username": user.username,
             "email": user.email,
             "id": user.id,
@@ -55,7 +60,7 @@ def register(request):
         }
         return Response(response_data, status=status.HTTP_200_OK)
     else:
-        return Response({"message": "Dados de usuário inválidos."}, status=400)
+        return Response({"message": "Dados de usuário inválidos!"}, status=400)
 
 
 @api_view(["POST"])
@@ -64,6 +69,7 @@ def register(request):
 def login(request):
     value = request.data.get("value")
     password = request.data.get("password")
+    print(value, password)
 
     if value is not None and password is not None:
         try:
@@ -72,10 +78,13 @@ def login(request):
             user = authenticate(username=username, password=password)
         except User.DoesNotExist:
             user = None
+            
     else:
         return Response(
-            {"error": "Credenciais inválidas"}, status=status.HTTP_400_BAD_REQUEST
+            {"message": "Credenciais inválidas!"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    print(user)
 
     if user is not None:
         refresh = RefreshToken.for_user(user)
@@ -87,12 +96,13 @@ def login(request):
             "username": user.username,
             "email": user.email,
             "id": user.id,
+            "message": "Login realizado com sucesso!"
             # Adicione outros campos do usuário que você deseja retornar
         }
         return Response(response_data, status=status.HTTP_200_OK)
     else:
         return Response(
-            {"error": "Falha na autenticação"}, status=status.HTTP_401_UNAUTHORIZED
+            {"message": "Credenciais inválidas!"}, status=status.HTTP_400_BAD_REQUEST
         )
 
 
@@ -100,15 +110,23 @@ import smtplib
 from email.mime.text import MIMEText
 
 
-def enviar_email(destinatario, assunto, mensagem):
+def enviar_email(destinatario, assunto, token, name):
     remetente = "trottingtomes@gmail.com"
     senha = "xektjmzuaveczuhh"
 
+    with open('/home/faelbochi/Documentos/ifc/trabalhos/hackathon/back/usuario/email/token_change_password.html', 'r') as file:
+        conteudo_html = file.read()
+
+    conteudo_html = conteudo_html.replace('{name}', name)
+    conteudo_html = conteudo_html.replace('{token}', token)
+
     # Criando a mensagem
-    msg = MIMEText(mensagem)
+    msg = MIMEMultipart()
     msg["Subject"] = assunto
     msg["From"] = remetente
     msg["To"] = destinatario
+
+    msg.attach(MIMEText(conteudo_html, 'html'))
 
     # Conectando ao servidor SMTP do Gmail
     server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -116,7 +134,7 @@ def enviar_email(destinatario, assunto, mensagem):
     server.login(remetente, senha)
 
     # Enviando o e-mail
-    server.send_message(msg)
+    server.sendmail(remetente, destinatario, msg.as_string())
     server.quit()
 
 
@@ -129,24 +147,31 @@ def forget_password(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         return Response(
-            {"error": "Email não encontrado"}, status=status.HTTP_401_UNAUTHORIZED
+            {"message": "Email não encontrado"}, status=status.HTTP_401_UNAUTHORIZED
         )
         pass
     else:
+        if(user.password_reset_token is not None):
+            user.password_reset_token = None
+            
         # Gerar token exclusivo
-        token = secrets.token_hex(20)
+        desired_length = 6
+        token_size = (desired_length + 1) // 2 
+        token = secrets.token_hex(token_size)[:desired_length]
         # Salvar o token, e-mail do usuário e data/hora
         user.password_reset_token = token
         user.password_reset_token_created = datetime.now(pytz.timezone('America/Sao_Paulo'))
         user.save()
+
+        print(user.password_reset_token_created)
         # Enviar e-mail
         subject = "Redefinição de senha"
-        message = f"Olá, {user.username}! Para redefinir sua senha, clique neste link: http://localhost:5173/change-password/"
         to_email = email
         enviar_email(
             to_email,
             subject,
-            message,
+            token,
+            name = user.username
         )
 
         response_data = {
@@ -157,6 +182,42 @@ def forget_password(request):
         # Exibir uma mensagem de sucesso na tela
         return Response(response_data, status=status.HTTP_200_OK)
 
+TOKEN_EXPIRATION_SECONDS = 1200 
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([])
+def check_token_reset_password(request):
+    id = request.data.get("user_id")
+    token = request.data.get('token')
+
+    try:
+        user = User.objects.get(id=id)  # Alterar para 'id=usuario_id'
+    except User.DoesNotExist:
+        return Response(
+            {"message": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    if user.password_reset_token_created:
+        timezone = pytz.timezone('America/Sao_Paulo')
+        current_time = datetime.now(timezone)
+        expiration_time = current_time - user.password_reset_token_created
+        
+        print(expiration_time.total_seconds())
+        if expiration_time.total_seconds() > TOKEN_EXPIRATION_SECONDS:
+            user.password_reset_token = None
+            user.password_reset_token_created = None
+            user.save()
+            return Response(
+                {"message": "Token expirado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    
+    if token == user.password_reset_token:
+        return Response(
+                {"message": "Token valido."},
+                status=status.HTTP_200_OK,
+            )
 
 @api_view(["POST"])
 @authentication_classes([])
@@ -172,13 +233,18 @@ def change_password(request):
             {"message": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND
         )
 
-    # Verificar se o token expirou (se necessário)
-    # Aqui está um exemplo de verificação se o token expirou após 1 hora
-    if user.password_reset_token_created is not None:
-        expiration_time = datetime.now(pytz.timezone('America/Sao_Paulo')) - user.password_reset_token_created
-        if expiration_time.total_seconds() > 3600:  # Token expirado após 1 hora
+    if user.password_reset_token_created:
+        timezone = pytz.timezone('America/Sao_Paulo')
+        current_time = datetime.now(timezone)
+        expiration_time = current_time - user.password_reset_token_created
+        
+        print(expiration_time.total_seconds())
+        if expiration_time.total_seconds() > TOKEN_EXPIRATION_SECONDS:
+            user.password_reset_token = None
+            user.password_reset_token_created = None
+            user.save()
             return Response(
-                {"message": "Token de redefinição de senha expirado."},
+                {"message": "Token expirado."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
             
@@ -187,37 +253,67 @@ def change_password(request):
     user.set_password(new_password)
     user.save()
 
-    # Limpar o token de redefinição de senha e data/hora
-    #user.password_reset_token = ""
-    #user.password_reset_token_created = None
-    #user.save()
+    user.password_reset_token = ""
+    user.password_reset_token_created = None
+    user.save()
 
     return Response(
         {"message": "Senha atualizada com sucesso."}, status=status.HTTP_200_OK
     )
 
-@api_view(["PUT"])
+def upload_user_foto(user_id, image):
+    user = User.objects.get(id=user_id)
+
+    if user.foto is not None:
+        existing_foto = Image.objects.get(attachment_key=user.foto.attachment_key)
+        existing_foto.delete()
+
+    # Agora, crie um novo registro de imagem para a foto enviada
+    new_foto = Image.objects.create(file=image, description=f"Foto de perfil do usuário - {user.username}")
+    user.foto = new_foto
+    user.save()
+    print(user.foto)
+
+
+    response_data = {
+        "foto": "Foto excluída com sucesso.",
+    }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([])
 def edit_account(request):
-    user_id = request.data.get("user_id")
+    print(request.data.get("image"))
+    print(request.data)
+    user_id = request.data.get('user_id')
     username = request.data.get("username")
     email = request.data.get("email")
     password = request.data.get("password")
+    image = request.FILES.get("image")
+
 
     user = User.objects.get(id=user_id)
 
-    if username != '' and username is not None:
+    if username != '' and username is not None and username != user.username:
         user.username = username
 
-    if email != '' and email is not None:
+    if email != '' and email is not None and email != user.email:
         user.email = email
 
-    if password != '' and password is not None:
+    if password != '' and password is not None and password != user.password:
         user.set_password(password)
+        
 
+    # upload_user_foto(user_id, image)
     user.save()
 
     response_data = {
         "message": "Usuário atualizado com sucesso.",
+        "username": user.username,
+        "email": user.email,
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
+

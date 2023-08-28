@@ -4,17 +4,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
+SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
 
-SECRET_KEY = os.environ.get('SECRET_KEY', default='django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^')
+DEBUG = True
 
-DEBUG = 'RENDER' not in os.environ
-
-ALLOWED_HOSTS = [] 
-
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] 
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -23,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'uploader',
     'app',
     'usuario',
     'rest_framework',
@@ -33,13 +28,19 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissions",
-    ],
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    # "DEFAULT_PERMISSION_CLASSES": [
+    #     "rest_framework.permissions.DjangoModelPermissions",
+    # ],
+    # "DEFAULT_AUTHENTICATION_CLASSES": (
+    #     "rest_framework_simplejwt.authentication.JWTAuthentication",
+    # ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PARSER_CLASSES": (
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+        "rest_framework.parsers.FileUploadParser",
+    ),
 }
 
 SPECTACULAR_SETTINGS = {
@@ -52,7 +53,6 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -129,19 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-# Essa configuração informa ao Django em qual URL os arquivos estáticos serão servidos ao usuário.
-# Aqui, eles estarão acessíveis em seu-domínio.onrender.com/static/...
-STATIC_URL = '/static/'
-
-# As seguintes configurações só fazem sentido em produção e podem causar problemas em ambientes de desenvolvimento.
-if not DEBUG:
-    # Indica ao Django para copiar os arquivos estáticos para o diretório `staticfiles` 
-    # no diretório da sua aplicação no Render.
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-    # Ativa o backend de armazenamento WhiteNoise, que cuida da compressão dos arquivos estáticos
-    # e cria nomes únicos para cada versão, permitindo que sejam armazenados em cache com segurança para sempre.
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -165,5 +153,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'trottingtomes@gmail.com'
 EMAIL_HOST_PASSWORD = 'trottingtomes1?'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# App Uploader settings
+MEDIA_URL = "http://localhost:8000/media/"
+MEDIA_ENDPOINT = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
+FILE_UPLOAD_PERMISSIONS = 0o640
+
+APPEND_SLASH=False

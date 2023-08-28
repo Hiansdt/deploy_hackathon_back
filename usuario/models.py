@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .managers import CustomUserManager
-
+from uploader.models import Image
 
 class Usuario(AbstractUser):
     username = models.CharField(max_length=50, unique=True)
@@ -14,10 +14,17 @@ class Usuario(AbstractUser):
     data_nascimento = models.DateField(
         _("Birth Date"), auto_now=False, auto_now_add=False, blank=True, null=True
     )
-    password_reset_token_created = models.DateTimeField(null=True, blank=True)
-
-
+    foto = models.ForeignKey(
+        Image,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    password_reset_token = models.CharField(max_length=6, null=True, blank=True, default=None)
+    password_reset_token_created = models.DateTimeField(null=True, blank=True, default=None)
     
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = "username"
@@ -32,6 +39,7 @@ class Usuario(AbstractUser):
         verbose_name = "Usuário"
         verbose_name_plural = "Usuários"
         ordering = ["-date_joined"]
+
 
 @receiver(post_save, sender=Usuario)
 def create_user_carrinho(sender, instance, created, **kwargs):

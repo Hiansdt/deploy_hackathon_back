@@ -14,13 +14,17 @@ class CarrinhoLivro(models.Model):
         verbose_name_plural = "CarrinhoLivros"
 
     def __str__(self):
-        return self.livro.title
+        return f'{self.quantidade} - {self.livro}'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.carrinho.total = 0
+        print(CarrinhoLivro.objects.filter(carrinho=self.carrinho))
+        for item in CarrinhoLivro.objects.filter(carrinho=self.carrinho):
+            print(item.livro.price * item.quantidade)
+            self.carrinho.total += item.livro.price * item.quantidade
+        self.carrinho.save()
     
-@receiver(post_save, sender=CarrinhoLivro)
-def create_carrinhoLivro(sender, instance=None, created=False, **kwargs):
-    if created:
-        instance.carrinho.total += instance.livro.price * instance.quantidade
-        instance.carrinho.save()
 
 @receiver(post_delete, sender=CarrinhoLivro)
 def delete_carrinhoLivro(sender, instance, **kwargs):

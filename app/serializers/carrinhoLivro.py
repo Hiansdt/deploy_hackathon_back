@@ -6,7 +6,7 @@ class CarrinhoLivroSerializer(ModelSerializer):
     class Meta:
         model = CarrinhoLivro
         fields = "__all__"
-        depth = 1
+        depth = 2
 
 class CarrinhoLivroSerializerCreate(ModelSerializer):
     class Meta:

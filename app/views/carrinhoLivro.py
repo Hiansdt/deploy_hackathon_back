@@ -24,6 +24,7 @@ class CarrinhoLivroViewSet(ModelViewSet):
 @authentication_classes([])
 @permission_classes([])
 def getBookCartOfUser(request):
+    print(request.data)
     cart_id = request.GET.get("cart_id")
     if cart_id:
         bookCart = CarrinhoLivro.objects.filter(carrinho_id=cart_id)

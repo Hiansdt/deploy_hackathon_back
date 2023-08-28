@@ -6,7 +6,7 @@ class FavoriteSerializer(ModelSerializer):
     class Meta:
         model = Favorite
         fields = "__all__"
-        depth = 1
+        depth = 2
 
 class FavoriteSerializerCreate(ModelSerializer):
     class Meta:
