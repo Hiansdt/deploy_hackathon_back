@@ -4,17 +4,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', default='django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^')
+SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
 
-# SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
-
-DEBUG = 'RENDER' not in os.environ
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1'] 
-
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -138,12 +132,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-if not DEBUG:
-    
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+# Default primary key field type
+# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -171,3 +161,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 FILE_UPLOAD_PERMISSIONS = 0o640
 
 APPEND_SLASH=False
+
+if MODE == "PRODUCTION":
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
