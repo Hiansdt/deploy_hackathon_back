@@ -31,7 +31,7 @@ from drf_spectacular.views import (
 )
 
 from usuario.views import login, register, forget_password, check_token_reset_password, change_password, edit_account, upload_user_foto
-from app.views.livro import getBooksOfFilters, searchBooks
+from app.views.livro import getBooksOfFilters, searchBooks, getBooksToSlides
 from app.views.favorite import getFavoritesOfUser
 from app.views.carrinhoLivro import getBookCartOfUser
 from app.views.carrinho import get_cart_user
@@ -58,6 +58,7 @@ urlpatterns = [
     path('api/get_cart_user/', get_cart_user, name='get_cart_user'),
     path('api/get_books_cart_of_user/', getBookCartOfUser, name='getBookCartOfUser'),
     path('api/get_coments_of_book/', getComentsOfBook, name='getComentsOfBook'),
+    path('api/get_books_to_slides/', getBooksToSlides, name='getBooksToSlides'),
 
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

@@ -135,3 +135,45 @@ def searchBooks(request):
 
     serializer = LivroSerializer(data, many=True)
     return Response(serializer.data, status=200)
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([])
+def getBooksToSlides(request):
+    type = request.GET.get("type")
+
+    print(request)
+
+    livros = Livro.objects.all()
+
+    if type == "news":
+        livros = Livro.objects.all()[::-1][:20]
+
+    if type == "50off":
+        livros = Livro.objects.filter(desconto=50)[:20]
+
+    if type == "bestPrice":
+        livros = Livro.objects.all().order_by('price')[:20]
+
+    if type == "trending":
+        livros = Livro.objects.all().order_by('-vendas')[:20]
+
+
+    data = []
+    for livro in livros:
+        livro_data = {
+            'id': livro.id,
+            'title': livro.title,
+            'price': livro.price,
+            'stock': livro.stock,
+            'isbn': livro.isbn,
+            'author': livro.author,
+            'genre': livro.genre.all(),
+            'capa': livro.capa,
+            'desconto': livro.desconto,
+            'vendas': livro.vendas,
+        }
+        data.append(livro_data)
+
+    serializer = LivroSerializer(data, many=True)
+    return Response(serializer.data, status=200)
