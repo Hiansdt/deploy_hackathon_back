@@ -2,15 +2,13 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from __pypackages__.3.10.lib.PIL.ImImagePlugin import MODE
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-tkrz*f((b%fb+-#26153kcm6kbx=6=+ed37mwnsbcg9_ut+84^'
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1'] 
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*'] 
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -163,7 +161,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 FILE_UPLOAD_PERMISSIONS = 0o640
 
 APPEND_SLASH=False
-
-if MODE == "PRODUCTION":
-    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
